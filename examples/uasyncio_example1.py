@@ -26,41 +26,21 @@ from uasyncio import sleep, create_task, Loop, CancelledError
 import lv_utils
 import lvgl as lv
 
-seed(ticks_us())
+
 lv.init()
+
+# Create event loop instance so it can process events
+event_loop = lv_utils.event_loop(asynchronous=True)
+
+seed(ticks_us())
+
 
 ##################################################################################################
 # Display initialization
 ##################################################################################################
 
-# Default resolution match ili9341
-HOR_RES = 240
-VER_RES = 320
-
-# Try to initialize SDL
-try:
-    # Register SDL display driver.
-
-    disp_drv = lv.sdl_window_create(HOR_RES, VER_RES)
-    mouse = lv.sdl_mouse_create()
-
-    event_loop = lv_utils.event_loop(asynchronous=True)
-
-except AttributeError:
-    pass
-
-# Try initialize ili9341/xpt2046
-try:
-    from ili9XXX import ili9341
-    from xpt2046 import xpt2046
-
-    # Initialize and register drivers
-
-    disp = ili9341(dc=32, cs=33, power=-1, backlight=-1, asynchronous=True, initialize=True)
-    touch = xpt2046()
-
-except ImportError:
-    pass
+disp = lv.linux_fbdev_create()
+lv.linux_fbdev_set_file(disp, "/dev/fb0")
 
 ##################################################################################################
 # Stylized Message Box class
@@ -154,20 +134,35 @@ async def btn_event_task(obj=None, event=-1):
 
     msg_box.close_msg_box()
 
+async def label_upd_task(obj):
+    for i in range(10, 0, -1):
+        obj.set_text(str(i))
+        await sleep(1)
+
+
 ##################################################################################################
 # Create objects and screen
 ##################################################################################################
 
+rt_style = lv.style_t()
+rt_style.set_bg_color(lv.color_make(80,90,100))
+rt_style.set_text_font(lv.font_unscii_8)
+
 scr = lv.screen_active()
+scr.add_style(rt_style, lv.PART.MAIN)
+#root = lv.obj(scr)
+#root.add_style(rt_style, lv.PART.MAIN)
 btn = lv.button(scr)
 btn.align(lv.ALIGN.TOP_MID, 0, 10)
-btn.add_event(lambda e: create_task(btn_event_task()), lv.EVENT.CLICKED, None)
+#btn.add_event_cb(lambda e: create_task(btn_event_task()), lv.EVENT.CLICKED, None)
+
 label = lv.label(btn)
 label.set_text('Click Me Again!')
-
+Loop.create_task(label_upd_task(label))
 ##################################################################################################
 # Start event loop
 ##################################################################################################
 
 Loop.run_forever()
+
 

@@ -444,8 +444,8 @@ extern void mp_lv_init_gc();
 #define LV_FONT_SIMSUN_16_CJK            0  /*1000 most common CJK radicals*/
 
 /*Pixel perfect monospace fonts*/
-#define LV_FONT_UNSCII_8  0
-#define LV_FONT_UNSCII_16 0
+#define LV_FONT_UNSCII_8  1
+#define LV_FONT_UNSCII_16 1
 
 /*Optionally declare custom fonts here.
  *You can use these fonts as default font too and they will be available globally.
@@ -901,6 +901,7 @@ extern void mp_lv_init_gc();
 
 /*Use SDL to open window on PC and handle mouse and keyboard*/
 #ifdef MICROPY_SDL
+    #define LV_LINUX_RB_SWAP_16	    1  /* Workaround for BGR issue of the skybox prototype */ 
     #define LV_USE_SDL MICROPY_SDL
 #else
     #define LV_USE_SDL 0
